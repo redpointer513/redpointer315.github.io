@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VR Open World Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/webxr/VRButton.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ammo.js/builds/ammo.wasm.js"></script>
+    <script>
+        let scene, camera, renderer, controls, physics, player;
+        let hunger = getCookie("hunger") || 100;
+        let thirst = getCookie("thirst") || 100;
+        let season = getCookie("season") || "Spring";
+        let weather = "Sunny";
+
+        init();
+        animate();
+
+        async function init() {
+            physics = await AmmoPhysics();
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1.6, 5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.xr.enabled = true;
+            document.body.appendChild(renderer.domElement);
+            document.body.appendChild(VRButton.createButton(renderer));
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.target.set(0, 1.6, 0);
+            controls.update();
+
+            updateLighting();
+            generateTerrain();
+            generateObjects();
+            generateNPCs();
+            generateBoss();
+            generateFoodAndWater();
+
+            player = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshStandardMaterial({ color: 0x0000ff }));
+            player.position.set(0, 2, 0);
+            scene.add(player);
+            physics.addMesh(player, 1);
+
+            generatePhysicsObjects();
+
+            setInterval(updateSurvival, 10000);
+            setInterval(updateWeather, 30000);
+            setInterval(updateSeasons, 60000);
+        }
+
+        function updateLighting() {
+            scene.children.forEach(child => {
+                if (child.isLight) scene.remove(child);
+            });
+            const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
+            scene.add(light);
+            console.log("Lighting Updated: " + weather);
+        }
+
+        function updateWeather() {
+            const weatherTypes = ["Sunny", "Rainy", "Snowy", "Cloudy", "Stormy"];
+            weather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
+            setCookie("weather", weather, 1);
+            console.log("Current Weather: " + weather);
+            updateLighting();
+        }
+
+        function updateSeasons() {
+            const seasons = ["Spring", "Summer", "Autumn", "Winter"];
+            season = seasons[(seasons.indexOf(season) + 1) % seasons.length];
+            setCookie("season", season, 7);
+            console.log("Current Season: " + season);
+        }
+
+        function generateTerrain() {
+            const geometry = new THREE.PlaneGeometry(100, 100, 50, 50);
+            const material = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+            const terrain = new THREE.Mesh(geometry, material);
+            terrain.rotation.x = -Math.PI / 2;
+            scene.add(terrain);
+            physics.addMesh(terrain, 0);
+        }
+
+        function updateSurvival() {
+            hunger -= 10;
+            thirst -= 15;
+            setCookie("hunger", hunger, 7);
+            setCookie("thirst", thirst, 7);
+            checkForConsumption();
+
+            if (hunger <= 0 || thirst <= 0) {
+                console.log("You have died of starvation or dehydration!");
+            } else {
+                console.log(`Hunger: ${hunger}, Thirst: ${thirst}`);
+            }
+        }
+
+        function animate() {
+            renderer.setAnimationLoop(() => {
+                physics.update();
+                checkForConsumption();
+                renderer.render(scene, camera);
+            });
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = `${name}=${value};${expires};path=/`;
+        }
+
+        function checkForConsumption() {
+            if (hunger <= 0 || thirst <= 0) {
+                alert("You have died!");
+            }
+        }
+
+        function generateObjects() {
+            
+        }
+
+        function generateNPCs() {
+            
+        }
+
+        function generateBoss() {
+            
+        }
+
+        function generateFoodAndWater() {
+            
+        }
+
+        function generatePhysicsObjects() {
+            
+        }
+    </script>
+</body>
+</html>
